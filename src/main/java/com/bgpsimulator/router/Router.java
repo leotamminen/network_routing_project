@@ -1,23 +1,25 @@
 package com.bgpsimulator.router;
 
-
+import java.io.*;
 import java.util.*;
-
 import com.bgpsimulator.network.NetworkTopology;
 import com.bgpsimulator.packet.IPPacket;
-
-import java.util.*;
+import java.net.*;
 
 public class Router {
     private String name;
     private String ipAddress;
-    private Map<String, Router> routingTable = new HashMap<>();  // Maps destination IP to Router object
+    private Map<Integer, Router> routingTable = new HashMap<>();  // Maps destination IP to Router object
     private List<Router> neighbors = new ArrayList<>();
     private boolean coldStart = true;  // Indicates if the router is in the cold start phase
+    private ServerSocket serverSocket;
+    private int port;
 
-    public Router(String name, String ipAddress) {
+    public Router(String name, String ipAddress, int port) throws IOException {
         this.name = name;
         this.ipAddress = ipAddress;
+        this.port = port;
+        this.serverSocket = new ServerSocket(port);
     }
 
     public String getName() {
@@ -28,6 +30,20 @@ public class Router {
         return ipAddress;
     }
 
+    public int getPort() { return port; }
+
+    public void start() {
+        new Thread(() -> {
+            try {
+                while (true) {
+                    Socket clientSocket = serverSocket.accept();
+                    new Thread(new PacketHandler(clientSocket)).start();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
     /**
      * Discover neighbors for the router.
      * During the cold start phase, the router will discover its direct neighbors
@@ -51,17 +67,17 @@ public class Router {
      * It also propagates routing information to its neighbors, allowing them to learn about
      * routes that this router knows.
      */
-    public void buildRoutingTable() {
+    public synchronized void buildRoutingTable() {
         // Add direct neighbors to the routing table
         for (Router neighbor : neighbors) {
-            routingTable.put(neighbor.getIpAddress(), neighbor);  // Route to neighbor's IP
+            routingTable.put(neighbor.getPort(), neighbor);  // Route to neighbor's IP
         }
 
         System.out.println(name + " built initial routing table: " + routingTable);
         
         // Propagate routing information to neighbors
         for (Router neighbor : neighbors) {
-            neighbor.updateRoutingTable(this.routingTable, this); // Propagate routes to neighbors
+            neighbor.updateRoutingTable(new HashMap<>(this.routingTable), this); // Propagate routes to neighbors
         }
     }
 
@@ -76,14 +92,14 @@ public class Router {
      * @param neighborRoutingTable A mapping of destination IPs to Router objects from the neighbor.
      * @param nextHop The Router object that provided the routing information.
      */
-    public void updateRoutingTable(Map<String, Router> neighborRoutingTable, Router nextHop) {
-        for (Map.Entry<String, Router> entry : neighborRoutingTable.entrySet()) {
-            String destinationIP = entry.getKey();
+    public void updateRoutingTable(Map<Integer, Router> neighborRoutingTable, Router nextHop) {
+        for (Map.Entry<Integer, Router> entry : neighborRoutingTable.entrySet()) {
+            int destinationPort = entry.getKey();
             Router neighborRouter = entry.getValue();
 
             // If we don't have a route to the destination, learn it from the neighbor
-            if (!routingTable.containsKey(destinationIP)) {
-                routingTable.put(destinationIP, nextHop); // Route via the neighbor
+            if (!routingTable.containsKey(destinationPort)) {
+                routingTable.put(destinationPort, nextHop); // Route via the neighbor
             }
         }
         
@@ -94,11 +110,11 @@ public class Router {
     /**
      * Lookup the next hop router for a given destination IP address.
      *
-     * @param destinationIp The IP address of the destination.
+     * @param destinationPort The IP address of the destination.
      * @return The Router object corresponding to the next hop, or null if no route is found.
      */
-    public Router lookupNextHop(String destinationIp) {
-        return routingTable.getOrDefault(destinationIp, null);  // Return next hop Router or null
+    public Router lookupNextHop(int destinationPort) {
+        return routingTable.getOrDefault(destinationPort, null);  // Return next hop Router or null
     }
 
     /**
@@ -107,27 +123,21 @@ public class Router {
      * If not, it looks up the next hop router based on the destination IP and forwards the packet.
      *
      * @param packet The IP packet to be processed.
-     * @param topology The network topology to resolve routers.
      */
-    public void processPacket(IPPacket packet, NetworkTopology topology) {
-        String destinationIP = packet.getDestinationIP();
-        System.out.println("Router " + name + " is processing packet from " + packet.getSourceIP() + " to " + destinationIP);
-        
-        // Check if this router is the destination
-        if (ipAddress.equals(destinationIP)) {
+    public void processPacket(IPPacket packet) {
+        int destinationPort = packet.getDestinationPort();  // Assuming destination IP is now a port
+        System.out.println("Router " + name + " is processing packet from " + packet.getSourceIP() + " to port " + destinationPort);
+
+        if (port == destinationPort) {
             System.out.println("Packet arrived at destination: " + name + " with message: " + packet.getMessage());
         } else {
-            // Lookup the routing table for the next hop
-            Router nextHopRouter = lookupNextHop(destinationIP);
+            Router nextHopRouter = lookupNextHop(destinationPort);
 
-            // Debugging info: print the next hop router name
             if (nextHopRouter != null) {
-                System.out.println("Next hop for destination IP " + destinationIP + " is: " + nextHopRouter.getName());
-                
-                // Forward packet to next hop
-                nextHopRouter.processPacket(packet, topology);
+                System.out.println("Next hop for destination port " + destinationPort + " is: " + nextHopRouter.getName());
+                sendPacketToNextHop(packet, nextHopRouter);
             } else {
-                System.out.println("No route found to destination IP: " + destinationIP);
+                System.out.println("No route found to destination port: " + destinationPort);
             }
         }
     }
@@ -135,13 +145,21 @@ public class Router {
     /**
      * Create a packet to send a message to a specific destination IP.
      * 
-     * @param destinationIp The IP address of the destination router.
+     * @param destinationPort The port of the destination router.
      * @param message The message to be sent in the packet.
-     * @param topology The network topology to resolve routers.
      */
-    public void sendMessage(String destinationIp, String message, NetworkTopology topology) {
-        IPPacket packet = new IPPacket(this.ipAddress, destinationIp, message);
-        processPacket(packet, topology);
+    public void sendMessage(int destinationPort, String message) {
+        IPPacket packet = new IPPacket(this.ipAddress, destinationPort, message);
+        processPacket(packet);
+    }
+
+    private void sendPacketToNextHop(IPPacket packet, Router nextHopRouter) {
+        try (Socket socket = new Socket(nextHopRouter.getIpAddress(), nextHopRouter.getPort());
+             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+            out.writeObject(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private String getNeighborNames() {
@@ -153,7 +171,27 @@ public class Router {
     }
 
     // For testing purposes, allow external access to the routing table
-    public Map<String, Router> getRoutingTable() {
+    public Map<Integer, Router> getRoutingTable() {
         return routingTable;
     }
+
+    private class PacketHandler implements Runnable {
+        private Socket clientSocket;
+
+        public PacketHandler(Socket clientSocket) {
+            this.clientSocket = clientSocket;
+        }
+
+        @Override
+        public void run() {
+            try (ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())) {
+                IPPacket packet = (IPPacket) in.readObject();
+                processPacket(packet);  // Assuming topology is accessible or passed in some way
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
+
+
