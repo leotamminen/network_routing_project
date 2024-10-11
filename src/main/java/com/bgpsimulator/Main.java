@@ -5,62 +5,76 @@ import com.bgpsimulator.network.NetworkTopology;
 import com.bgpsimulator.packet.IPPacket;
 
 import com.bgpsimulator.router.Router;
-
-
 // Main.java
-import java.util.Scanner;
+import java.io.IOException;
+import java.util.*;
 
 public class Main {
-    public static void main(String[] args) {
-        // Create routers with names and IPs
-        Router router1 = new Router("Router1", "1");
-        Router router2 = new Router("Router2", "2");
-        Router router3 = new Router("Router3", "3");
-        Router router4 = new Router("Router4", "4");
-        // Create the network topology and add routers
-        NetworkTopology topology = new NetworkTopology();
-        topology.addRouter(router1);
-        topology.addRouter(router2);
-        topology.addRouter(router3);
-        topology.addRouter(router4);
+    public static void main(String[] args) throws IOException {
+        {
+            List<Router> routers = new ArrayList<>();
+            int numberOfRouters = 4;
 
-        // Define connections (assumed bidirectional)
-        topology.addConnection(router1, router2);
-        topology.addConnection(router2, router3);
-        topology.addConnection(router1, router4);
-        // Discover neighbors and build routing tables
-        router1.discoverNeighbors(topology);
-        router2.discoverNeighbors(topology);
-        router3.discoverNeighbors(topology);
-        router4.discoverNeighbors(topology);
-        
-        router1.buildRoutingTable();
-        router2.buildRoutingTable();
-        router3.buildRoutingTable();
-        router4.buildRoutingTable();
+            // Create and start routers in a loop
+            for (int i = 1; i <= numberOfRouters; i++) {
+                String name = "Router" + i;
+                String ipAddress = ("127.0.0.1");
+                int port = 5000 + i;
 
-        // Create a Scanner object for user input
-        Scanner scanner = new Scanner(System.in);
-        
-        // Loop to allow user to send messages
-        while (true) {
-            System.out.print("Enter destination IP address (or type 'exit' to quit): ");
-            String destinationIp = scanner.nextLine();
-
-            // Exit if the user types 'exit'
-            if (destinationIp.equalsIgnoreCase("exit")) {
-                System.out.println("Exiting...");
-                break;
+                Router router = new Router(name, ipAddress, port);
+                routers.add(router);
             }
 
-            System.out.print("Enter your message: ");
-            String message = scanner.nextLine();
+            NetworkTopology topology = new NetworkTopology();
+            for (Router router : routers) {
+                topology.addRouter(router);
+            }
 
-            // Send the message from Router1 for demonstration purposes
-            router3.sendMessage(destinationIp, message, topology);
+            // Define connections (assumed bidirectional)
+            topology.addConnection(routers.get(0), routers.get(1));
+            topology.addConnection(routers.get(1), routers.get(2));
+            topology.addConnection(routers.get(0), routers.get(3));
+
+            // Discover neighbors and build routing tables
+            for (Router router : routers) {
+                router.discoverNeighbors(topology);
+            }
+
+            for (Router router : routers) {
+                router.buildRoutingTable();
+            }
+
+            // Start the routers after building the routing tables
+            for (Router router : routers) {
+                router.start();
+                System.out.println(router.getName() + " started on port: " + router.getPort() + " with IP address: "+ router.getIpAddress());
+            }
+
+            // Create a Scanner object for user input
+            Scanner scanner = new Scanner(System.in);
+
+            // Loop to allow user to send messages
+            while (true) {
+                System.out.print("Enter destination port (or type 'exit' to quit): ");
+                String input = scanner.nextLine();
+
+                // Exit if the user types 'exit'
+                if (input.equalsIgnoreCase("exit")) {
+                    System.out.println("Exiting...");
+                    break;
+                }
+
+                int destinationPort = Integer.parseInt(input);
+
+                System.out.print("Enter your message: ");
+                String message = scanner.nextLine();
+
+                // Send the message from Router1 for demonstration purposes
+                routers.get(2).sendMessage(destinationPort, message);
+            }
+
+            // Close the scanner
+            scanner.close();
         }
-
-        // Close the scanner
-        scanner.close();
     }
 }
