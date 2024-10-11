@@ -1,14 +1,18 @@
 package com.bgpsimulator.packet;
 
 
-public class IPPacket {
+import java.io.Serializable;
+
+public class IPPacket implements Serializable {
+    private static final long serialVersionUID = 1L;  // Add a serialVersionUID for version control
+
     private String sourceIP;
-    private String destinationIP;
+    private int destinationPort;
     private String message;
 
-    public IPPacket(String sourceIP, String destinationIP, String message) {
+    public IPPacket(String sourceIP, int destinationPort, String message) {
         this.sourceIP = sourceIP;
-        this.destinationIP = destinationIP;
+        this.destinationPort = destinationPort;
         this.message = message;
     }
 
@@ -16,8 +20,8 @@ public class IPPacket {
         return sourceIP;
     }
 
-    public String getDestinationIP() {
-        return destinationIP;
+    public int getDestinationPort() {
+        return destinationPort;
     }
 
     public String getMessage() {
