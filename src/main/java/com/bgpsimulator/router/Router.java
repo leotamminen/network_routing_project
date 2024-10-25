@@ -13,12 +13,15 @@ import com.bgpsimulator.network.TopologyParser;
 
 public class Router {
     private String routerIp;
+    
     private int routerPort;
     private ServerSocket serverSocket;
     private ExecutorService threadPool;
     private Map<String, String> routingTable;  // Destination IP to Next Hop IP
+    private String name;
 
-    public Router(String ip, int port) {
+    public Router(String name, String ip, int port) {
+        this.name = name;
         this.routerIp = ip;
         this.routerPort = port;
         this.threadPool = Executors.newFixedThreadPool(10); // Handle up to 10 concurrent connections
@@ -50,8 +53,8 @@ public class Router {
     }
 
     // Method to update the routing table
-    public void addRoute(String destinationIp, String nextHopIp) {
-        routingTable.put(destinationIp, nextHopIp);
+    public void addRoute(String destinationName, String nextHopName) {
+        routingTable.put(destinationName, nextHopName);
     }
 
     // Method to connect to neighbors based on topology links
