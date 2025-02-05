@@ -175,6 +175,27 @@ public class Router {
         return routingTable;
     }
 
+    public void forwardPacket(List<Router> path, String message) {
+        if (path.size() < 2) {
+            System.out.println("Invalid forwarding path.");
+            return;
+        }
+
+        Router nextHop = path.get(1); // The next router in the path
+        System.out.println(this.getName() + " forwarding packet to " + nextHop.getName());
+
+        nextHop.receivePacket(path.subList(1, path.size()), message);
+    }
+
+    public void receivePacket(List<Router> remainingPath, String message) {
+        if (remainingPath.size() == 1) {
+            System.out.println("Packet arrived at destination: " + this.getName() + " with message: " + message);
+        } else {
+            forwardPacket(remainingPath, message);
+        }
+    }
+
+
     private class PacketHandler implements Runnable {
         private Socket clientSocket;
 

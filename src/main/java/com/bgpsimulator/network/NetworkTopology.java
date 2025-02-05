@@ -52,4 +52,37 @@ public class NetworkTopology {
     public Map<Router, List<Router>> getTopology() {
         return topology;
     }
+
+    public List<Router> computeShortestPath(Router source, Router destination) {
+        if (!topology.containsKey(source) || !topology.containsKey(destination)) {
+            return Collections.emptyList(); // No path found
+        }
+
+        Queue<List<Router>> queue = new LinkedList<>();
+        Set<Router> visited = new HashSet<>();
+
+        queue.add(Collections.singletonList(source));
+        visited.add(source);
+
+        while (!queue.isEmpty()) {
+            List<Router> path = queue.poll();
+            Router lastRouter = path.get(path.size() - 1);
+
+            if (lastRouter.equals(destination)) {
+                return path; // Found the shortest path
+            }
+
+            for (Router neighbor : topology.get(lastRouter)) {
+                if (!visited.contains(neighbor)) {
+                    visited.add(neighbor);
+                    List<Router> newPath = new ArrayList<>(path);
+                    newPath.add(neighbor);
+                    queue.add(newPath);
+                }
+            }
+        }
+
+        return Collections.emptyList(); // No route found
+    }
+
 }
