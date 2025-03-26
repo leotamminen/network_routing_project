@@ -44,6 +44,6 @@ Router1 forwarding packet to Router2
 Router2 forwarding packet to Router6
 Packet arrived at destination: Router6 with message: **hello**
 Enter destination router number (or type 'exit' to quit): 
-# BGP Simulator
+
 
 
