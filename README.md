@@ -9,13 +9,18 @@ This is a BGP (Border Gateway Protocol) simulator project that can be executed a
 ## Prerequisites
 
 Before running the BGP Simulator, ensure that you have the following installed:
+### 1. **Clone the reposition/fork (JRE)**
+git clone https://github.com/leotamminen/network_routing_project
+cd network_routing_project
 
-### 1. **Java Runtime Environment (JRE)**
+
+### 2. **Java Runtime Environment (JRE)**
 
 You need to have **Java 17 or higher** installed on your system. You can check if Java is installed by running the following command:
 
 java -version
-
+### 2. **Run the program (JRE)**
+java -jar target/bgpsimulator-1.0-SNAPSHOT.jar
 ### Usage
 1. **Run the program and input the number of routers.**
 2. **Manually enter the neighbors for each router** (e.g., `2,3` instead of full ports).
