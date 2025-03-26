@@ -1,24 +1,78 @@
-## DTEK8060 Programming Project
-
----
-
-| <img width="600" alt="Project Diagram" src="DTEK8060_Project_diagram.jpg" /> |
-| :--------------------------------------------------------------------------: |
-|              **High-level system design of the BGP Simulator**               |
-
----
-
-This is a **BGP (Border Gateway Protocol) simulator** project that can be executed as a standalone Java application.  
-Users can run the simulator by downloading the compiled `.jar` file and following the instructions below.
-
----
+# DTEK8060 Programming Project
 
 ## Overview
 
 A console-based simulator for understanding BGP-style routing behavior.  
 Users input router topology and can send messages between routers, which are forwarded along the shortest available path.
 
+```mermaid
+classDiagram
+    class Router {
+        - name: String
+        - ipAddress: String
+        - port: int
+        - routingTable: Map<Integer, Router>
+        - neighbors: List<Router>
+        - coldStart: boolean
+        - serverSocket: ServerSocket
+        + start()
+        + discoverNeighbors(NetworkTopology)
+        + buildRoutingTable()
+        + updateRoutingTable(Map, Router)
+        + processPacket(IPPacket)
+        + sendMessage(int, String)
+        + forwardPacket(List, String)
+        + receivePacket(List, String)
+    }
+
+    class NetworkTopology {
+        - topology: Map<Router, List<Router>>
+        + addRouter(Router)
+        + addConnection(Router, Router)
+        + getNeighbors(Router): List
+        + computeShortestPath(Router, Router): List
+    }
+
+    class IPPacket {
+        - sourceIP: String
+        - destinationPort: int
+        - message: String
+        + getSourceIP()
+        + getDestinationPort()
+        + getMessage()
+    }
+
+    class TrustManager {
+        - trustValues: Map<Router, Integer>
+        + setTrust(Router, int)
+        + getTrust(Router): int
+        + voteTrust(Router, Router, int)
+    }
+
+    class BGPProtocol {
+        + handleMessage(String, Router, Router)
+        + establishConnection(Router, Router)
+    }
+
+    class ErrorSimulator {
+        + simulateRouterFailure(Router)
+        + simulateLinkFailure(NetworkTopology, Router, Router)
+    }
+
+    Router --> NetworkTopology : uses
+    Router --> TrustManager : uses
+    Router --> IPPacket : processes
+    Router --> BGPProtocol : uses
+    NetworkTopology --> Router : contains
+    ErrorSimulator --> Router : simulates
+    ErrorSimulator --> NetworkTopology : affects
+    TrustManager --> Router : trusts
+```
+
 ---
+
+This is a **BGP (Border Gateway Protocol) simulator** project that can be executed as a standalone Java application.  
+Users can run the simulator by downloading the compiled `.jar` file and following the instructions below.
 
 ## Prerequisites
 
@@ -63,7 +117,22 @@ java -jar bgpsimulator-1.0-SNAPSHOT.jar
 
 ---
 
-## Example
+## Demonstration of a 7-router topology:
+
+```mermaid
+graph  TD;
+Router1  --> Router2
+
+Router1  --> Router3
+
+Router1  --> Router7
+
+Router2  --> Router4
+
+Router2  --> Router6
+
+Router3  --> Router5
+```
 
 ```
 Enter the number of routers: 7
