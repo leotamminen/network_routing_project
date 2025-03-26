@@ -1,5 +1,13 @@
 ## DTEK8060 Programming Project
 
+---
+
+| <img width="600" alt="Project Diagram" src="DTEK8060_Project_diagram.jpg" /> |
+| :--------------------------------------------------------------------------: |
+|              **High-level system design of the BGP Simulator**               |
+
+---
+
 This is a **BGP (Border Gateway Protocol) simulator** project that can be executed as a standalone Java application.  
 Users can run the simulator by downloading the compiled `.jar` file and following the instructions below.
 
