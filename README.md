@@ -20,7 +20,7 @@ You need to have **Java 17 or higher** installed on your system. You can check i
 
 java -version
 ### 2. **Run the program **
-java -jar target/bgpsimulator-1.0-SNAPSHOT.jar
+java -jar bgpsimulator-1.0-SNAPSHOT.jar
 ### Usage
 1. **Run the program and input the number of routers.**
 2. **Manually enter the neighbors for each router** (e.g., `2,3` instead of full ports).
