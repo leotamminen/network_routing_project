@@ -1,6 +1,21 @@
 ## DTEK8060 Programming Project
 
-Scalable and customizable simulator of inter-AS routing using BGP protocol.
+
+This is a BGP (Border Gateway Protocol) simulator project that can be executed as a standalone Java application. Users can run the simulator by downloading the compiled `.jar` file and following the instructions below.
+## Overview
+
+
+
+## Prerequisites
+
+Before running the BGP Simulator, ensure that you have the following installed:
+
+### 1. **Java Runtime Environment (JRE)**
+
+You need to have **Java 17 or higher** installed on your system. You can check if Java is installed by running the following command:
+
+```bash
+java -version
 
 ### Usage
 1. **Run the program and input the number of routers.**
@@ -30,3 +45,6 @@ Router1 forwarding packet to Router2
 Router2 forwarding packet to Router6
 Packet arrived at destination: Router6 with message: **hello**
 Enter destination router number (or type 'exit' to quit): 
+# BGP Simulator
+
+
