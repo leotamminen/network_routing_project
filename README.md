@@ -40,7 +40,7 @@ cd network_routing_project
 ### 2. Run the Program
 
 ```bash
-java -jar target/bgpsimulator-1.0-SNAPSHOT.jar
+java -jar bgpsimulator-1.0-SNAPSHOT.jar
 ```
 
 ---
