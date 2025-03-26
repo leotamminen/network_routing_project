@@ -24,7 +24,6 @@ Check your version with:
 
 ```bash
 java -version
-<<<<<<< HEAD
 ```
 
 ---
