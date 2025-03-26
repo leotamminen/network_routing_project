@@ -14,7 +14,6 @@ Before running the BGP Simulator, ensure that you have the following installed:
 
 You need to have **Java 17 or higher** installed on your system. You can check if Java is installed by running the following command:
 
-```bash
 java -version
 
 ### Usage
